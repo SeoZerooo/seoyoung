@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="noticeMapper">
+
+	<!--페이징 처리 -->
+	<select id="selectCountAll" resultType="int">
+	 SELECT COUNT(BOARD_NO)
+		FROM NOTICE_BOARD
+		WHERE STATUS = 'Y'
+	</select>
+
+	<!-- 게시글 목록 조회 -->
+	<select id="selectList" resultType="nv">
+	SELECT 
+	    ROW_NUMBER() OVER (ORDER BY N.BOARD_NO DESC) AS num,
+	        N.BOARD_NO AS boardNo
+	        ,N.TITLE
+	        ,N.CONTENT
+	        ,N.CNT
+	        ,TO_CHAR(N.ENROLL_DATE, 'YYYY"." MM"." DD') AS enrollDate
+	        ,N.MODIFY_DATE AS modifyDate
+	        ,N.STATUS
+	        , N.REPLY_COUNT AS replyCount
+	        ,E.NICK AS WRITER			
+    FROM NOTICE_BOARD N JOIN EMPLOYEE E
+    ON N.WRITER = E.EMP_NO
+    WHERE N.STATUS = 'Y'
+    
+    <choose>
+		<when test="condition == 'title'">
+			AND TITLE LIKE 
+		</when>
+		<otherwise>
+			AND NICK LIKE 
+		</otherwise>
+	</choose>
+	'%${keyword}%'
+	
+    ORDER BY N.BOARD_NO DESC
+	</select>
+
+	<!--  게시글 상세조회 -->
+	<select id="selectOne" resultType="nv">
+	SELECT
+	    N.BOARD_NO
+	    , N.TITLE
+	    , N.CONTENT
+	    , E.NICK AS writer
+	    , N.CNT
+	    , TO_CHAR(N.ENROLL_DATE, 'YYYY"년" MM"월" DD"일"') AS enrollDate
+	    , TO_CHAR(N.MODIFY_DATE, 'YYYY"년" MM"월" DD"일"') AS modifyDate
+	    , N.STATUS
+	FROM NOTICE_BOARD N JOIN EMPLOYEE E
+	ON N.WRITER = E.EMP_NO
+	WHERE N.BOARD_NO = #{boardNo}
+	AND N.STATUS = 'Y'
+	</select>
+	
+	
+	<!-- 조회수 증가 -->
+	<update id="increaseCnt">
+	UPDATE NOTICE_BOARD
+			SET CNT = CNT + 1
+	WHERE BOARD_NO = #{boardNo}
+	AND STATUS = 'Y'
+	</update>
+	
+	<!-- 게시글 삭제 -->
+	<update id="deleteBoard">
+	UPDATE NOTICE_BOARD
+		SET
+			STATUS = 'N'
+		WHERE BOARD_NO = #{boardNo}
+	</update>
+	
+	<!-- 게시글 작성 -->
+	<insert id="insertBoard">
+	INSERT INTO NOTICE_BOARD
+		(
+			BOARD_NO
+			, TITLE
+			, CONTENT
+			, WRITER
+		)
+		VALUES
+		(
+			SEQ_NOTICE_BOARD_NO.NEXTVAL
+			, #{title}
+			, #{content}
+			, #{writer}
+		)
+	</insert>
+	
+	<!-- 수정하기 -->
+	<update id="edit">
+	UPDATE NOTICE_BOARD
+		SET 
+			TITLE = #{title}
+			, CONTENT = #{content}
+			, MODIFY_DATE = SYSDATE
+		WHERE BOARD_NO = #{boardNo}
+	</update>
+	
+	
+	<!-- 중복방지//했는지 안했는지 체크 -->
+	<select id="scrapCheck" resultType="int">
+	SELECT COUNT(*) 
+		FROM NOTICE_SCRAP 
+	WHERE BNO = #{boardNo} 
+	AND 
+	EMP_NO = #{empNo}
+	</select>
+	
+	<!-- 스크랩 하기 -->
+	<insert id="scrap">
+	INSERT INTO NOTICE_SCRAP
+	(
+	SCRAP_NO,
+	EMP_NO, 
+	BNO
+	) 
+	VALUES (
+	(SELECT NVL(MAX(SCRAP_NO), 0) + 1 
+	FROM NOTICE_SCRAP),#{empNo},#{boardNo})
+	</insert>
+	
+	<!-- 스크랩 취소 -->
+	<delete id="scrapCancel">
+	DELETE FROM NOTICE_SCRAP 
+	WHERE BNO = #{boardNo} 
+	AND 
+	EMP_NO = #{empNo}
+	</delete>
+	
+	<!-- 게시글의 스크랩 수 -->
+	<select id="scrapCount" resultType="int">
+	SELECT 
+		COUNT(*) 
+	FROM NOTICE_SCRAP 
+	WHERE BNO = #{boardNo} 
+	</select>
+
+	<!-- 스크랩 목록 조회 -->
+	<select id="selectScrapList" resultType="svo">
+	SELECT 
+        ROW_NUMBER() OVER (ORDER BY S.SCRAP_DATE DESC) AS num,
+        S.SCRAP_NO AS scrapNo,
+        S.EMP_NO AS EmpNo,
+        S.BNO AS boardNo,
+        TO_CHAR(S.SCRAP_DATE, 'YYYY"년" MM"월" DD"일"') AS scrapDate,
+        B.TITLE,
+        E.NICK AS writer
+	FROM NOTICE_SCRAP S 
+    JOIN NOTICE_BOARD B
+    ON S.BNO = B.BOARD_NO
+    JOIN EMPLOYEE E
+    ON S.EMP_NO = E.EMP_NO
+	WHERE S.EMP_NO = #{empNo}
+	AND B.STATUS = 'Y'
+	</select>
+
+	<!-- 회원 해당 게시글 스크랩 여부 -->
+	<select id="findScrap" parameterType="java.util.HashMap" resultType="svo">
+	SELECT 
+		SCRAP_NO AS scrapNo 
+		, EMP_NO AS empNo
+		, BNO AS boardNo
+		, SCRAP_DATE 
+    FROM NOTICE_SCRAP 
+    WHERE EMP_NO = #{empNo} 
+    AND BNO = #{boardNo}
+	</select>
+	
+	<!-- 스크랩 목록 삭제 -->
+	<delete id="scrapDelete">
+	DELETE FROM NOTICE_SCRAP 
+	WHERE SCRAP_NO = #{scrapNo}
+	</delete>
+	
+	<!-- 다음글, 이전글 -->
+   <select id="movePage" resultType="nv">
+    select * from(SELECT 
+         BOARD_NO,
+            LEAD(BOARD_NO,1,9999) OVER(ORDER BY BOARD_NO) AS next,
+            LAG(BOARD_NO,1,9999) OVER(ORDER BY BOARD_NO) AS last,
+            TITLE,
+            LEAD(TITLE,1,9999) OVER(ORDER BY BOARD_NO) AS nextTitle,
+            LAG(TITLE,1,9999) OVER(ORDER BY BOARD_NO) AS lastTitle,
+            STATUS
+    FROM NOTICE_BOARD
+    WHERE STATUS = 'Y'
+    ORDER BY BOARD_NO DESC) 
+    WHERE BOARD_NO = #{boardNo}
+   </select>
+
+	
+	<!-- 댓글 수 업데이트(제목 옆 댓글 수 표시 하기 위함) -->
+    <update id="updateReplyCount">
+	update NOTICE_BOARD N
+		SET N.REPLY_COUNT = (
+	        SELECT COUNT(REPLY_NO) 
+	        FROM NOTICE_REPLY 
+	        WHERE BNO = #{boardNo}
+	        AND STATUS = 'Y'
+	        )
+	WHERE N.BOARD_NO = #{boardNo}
+	</update>
+	
+	
+</mapper>

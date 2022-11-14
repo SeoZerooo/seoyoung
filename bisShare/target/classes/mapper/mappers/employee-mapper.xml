@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="employeeMapper">
+
+	<!-- 로그인 -->
+	<select id="selectOneById" resultType="ev">
+		SELECT 
+		    E.EMP_NO
+		    , E.ID
+		    , E.PWD
+		    , E.NICK
+		    , E.PHONE
+		    , E.ADDRESS
+		    , E.SS_NO
+		    , TO_CHAR(E.HIRE_DATE, 'YYYY-MM-DD') AS HIRE_DATE 
+		    , E.SALARY
+		    , E.STATUS
+		    , E.PROFILE_PATH
+		    , E.EMAIL
+		    , C.COMP_NAME COMPANY_NAME
+		    , D.DEPT_NAME DEPT_NAME
+		    , R.RANK_NAME RANK_NAME
+		    , E.COMPANY_NO
+		    , E.DEPT_NO
+		    , E.RANK_NO
+		    , C.COMP_ADDRESS COMPANY_ADR
+		FROM EMPLOYEE E
+		JOIN COMPANY C
+		ON C.COMP_NO = E.COMPANY_NO
+		JOIN DEPT D
+		ON D.DEPT_NO = E.DEPT_NO
+		JOIN RANK R
+		ON R.RANK_NO = E.RANK_NO
+		WHERE STATUS='Y'
+		AND E.ID=#{id}
+	</select>
+	
+	<!-- 사원 등록 -->
+	<insert id="enroll">
+		INSERT INTO EMPLOYEE
+		(
+			EMP_NO,
+			ID,
+			PWD,
+			NICK,
+			PHONE,
+			EMAIL,
+			ADDRESS,
+			SS_NO,
+			HIRE_DATE,
+			SALARY,
+			PROFILE_PATH,
+			COMPANY_NO,
+			DEPT_NO,
+			RANK_NO
+		)
+		VALUES
+		(
+			SEQ_EMPLOYEE_NO.NEXTVAL
+			,#{id}
+			,#{pwd} 
+		    ,#{nick}
+		    ,#{phone} 
+		    ,#{email}
+		    ,#{address} 
+		    ,#{ssNo}
+		    ,#{hireDate} 
+		    ,#{salary}
+		    ,#{profilePath}
+		    ,#{companyNo}
+		    ,#{deptNo}
+		    ,#{rankNo}
+		)
+	</insert>
+	
+	
+	<select id="getList" resultType="ev">
+		SELECT 
+			E.EMP_NO VALUE,
+			E.NICK,
+			E.EMAIL,
+			D.DEPT_NAME,
+			R.RANK_NAME
+			, E.COMPANY_NO
+		    , E.DEPT_NO
+		    , E.RANK_NO
+		FROM EMPLOYEE E
+		JOIN RANK R
+			ON R.RANK_NO = E.RANK_NO
+		JOIN DEPT D
+			ON D.DEPT_NO = E.DEPT_NO
+		WHERE STATUS='Y'
+	</select>
+	
+	<!-- 아이디 중복체크 -->
+	<select id="idDup" resultType="int">
+	SELECT COUNT(*)
+		FROM EMPLOYEE
+	WHERE ID = #{memberId}
+	</select>
+	
+	<!-- 닉네임 중복체크 -->
+	<select id="nickDup" resultType="int">
+	SELECT COUNT(*)
+		FROM EMPLOYEE
+	WHERE NICK = #{memberNick}
+	</select>
+	
+	<!-- 속해있는 회사의 모든 부서 조회 -->
+	<select id="getDeptList" resultType="ev">
+		SELECT 
+			DEPT_NO
+			, DEPT_NAME 
+		FROM DEPT 
+		WHERE COMPANY_NO = #{compNo}
+	</select>
+	
+	<!-- 퇴직처리 -->
+	<update id="quit">
+	UPDATE EMPLOYEE 
+		SET STATUS = 'N',
+		QUIT_DATE = SYSDATE
+	WHERE ID = #{memberId} 
+	</update>
+	
+	
+	
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

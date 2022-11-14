@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd" >
+<configuration>
+	<settings>
+		<setting name="jdbcTypeForNull" value="NULL"/>
+		<setting name="mapUnderscoreToCamelCase" value="true"/>
+	</settings>
+	
+	<typeAliases>
+		<!-- 결재관련 -->
+		<typeAlias type="com.bs.approval.vo.ApprovalVo" alias="aprvVo"/>
+		<typeAlias type="com.bs.approval.vo.AprvAttVo" alias="aprvAttVo"/>
+		<!-- 멤버 -->
+		<typeAlias type="com.bs.employee.vo.EmployeeVo" alias="ev"/>
+		<!-- 메일 -->
+		<typeAlias type="com.bs.mail.vo.MailVo" alias="mv"/>
+		<!-- 일정 -->
+		<typeAlias type="com.bs.calendar.vo.CalendarVo" alias="calvo"/>
+		<!-- 주소록 -->
+		<typeAlias type="com.bs.address.vo.AddressVo" alias="addressvo"/>
+		<!-- 게시판 -->
+		<typeAlias type="com.bs.notice.vo.NoticeVo" alias="nv"/>
+		<typeAlias type="com.bs.free.vo.FreeVo" alias="fv"/>
+		<typeAlias type="com.bs.blind.vo.BlindVo" alias="bv"/>
+		<typeAlias type="com.bs.cloud.vo.CloudVo" alias="cv"/>
+		<!-- 게시판 댓글 -->
+		<typeAlias type="com.bs.notice.vo.NoticeReplyVo" alias="nrv"/>
+		<typeAlias type="com.bs.free.vo.FreeReplyVo" alias="frv"/>
+		<typeAlias type="com.bs.blind.vo.BlindReplyVo" alias="brv"/>
+		<!-- 게시판 스크랩 -->
+		<typeAlias type="com.bs.notice.vo.NoticeScrapVo" alias="svo"/>
+		
+	</typeAliases>
+</configuration>

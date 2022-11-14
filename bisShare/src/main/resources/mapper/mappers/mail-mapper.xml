@@ -1,0 +1,529 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="mailMapper">
+
+	<insert id="insertOne">
+		INSERT INTO MAIL(
+				MAIL_NO
+				, SEND
+				, TITLE
+				, CONTENT
+		)
+		VALUES (
+			SEQ_MAIL_NO.NEXTVAL
+			, #{send}
+			, #{title}
+			, #{content}
+		)
+	</insert>
+	
+	<insert id="insertRecInfo">
+		INSERT INTO MAIL_RECEIVE(
+			MAIL_REC_NO
+			, MAIL_NO
+			, RECEIVE
+			<if test="reference != null">
+				, REFERENCE
+			</if>
+		)
+		VALUES (
+			SEQ_MAIL_RECEIVE_NO.NEXTVAL
+			, SEQ_MAIL_NO.CURRVAL
+			, #{receive}
+			<if test="reference != null">
+				, #{reference}
+			</if>
+		)
+	</insert>
+	
+	<insert id="insertAtt">
+		INSERT INTO MAIL_ATT(
+			MAIL_ATT_NO
+			, MAIL_NO
+			, ORIGIN_NAME
+			, NAME
+		)
+		VALUES (
+			SEQ_MAIL_ATT_NO.NEXTVAL
+			, SEQ_MAIL_NO.CURRVAL
+			, #{originName}
+			, #{name}
+		)
+	</insert>
+	
+		<insert id="insertDraftAtt">
+		INSERT INTO DRAFT_ATT(
+			DRAFT_ATT_NO
+			, DRAFT_NO
+			, ORIGIN_NAME
+			, NAME
+		)
+		VALUES (
+			SEQ_DRAFT_ATT_NO.NEXTVAL
+			, SEQ_DRAFT_NO.CURRVAL
+			, #{originName}
+			, #{name}
+		)
+	</insert>
+	
+	<select id="selectAll" resultType="mv">
+		SELECT 
+		    MAIL_NO,
+		    SEND,
+		    LISTAGG(RECEIVE,',') WITHIN GROUP(ORDER BY RECEIVE) AS RECEIVE,
+		    TITLE,
+		    CONTENT,
+		    ENROLL_DATE,
+		    STAR,
+		    LISTAGG(REFERENCE,',') WITHIN GROUP(ORDER BY REFERENCE) AS REFERENCE,
+		    READ_YN
+		FROM (
+				SELECT 
+					M.MAIL_NO
+					, E.NICK SEND
+					, EE.NICK RECEIVE
+					, M.TITLE
+					, M.CONTENT
+					, M.ENROLL_DATE
+					, R.STAR
+					, R.REFERENCE
+					, R.READ_YN
+				FROM MAIL M
+					INNER JOIN MAIL_RECEIVE R
+					ON M.MAIL_NO = R.MAIL_NO
+					INNER JOIN EMPLOYEE E
+					ON M.SEND = E.EMP_NO
+		            JOIN EMPLOYEE EE
+		            ON R.RECEIVE = EE.EMP_NO
+				WHERE R.STATUS=0
+		        AND R.RECEIVE=#{receive}
+		        AND R.REFERENCE IS NULL
+		        ) 
+		GROUP BY MAIL_NO, TITLE, CONTENT, ENROLL_DATE, STAR, READ_YN, SEND 
+	</select>
+	
+	<update id="updateStar">
+		UPDATE MAIL_RECEIVE
+		SET STAR = ${star}
+		WHERE MAIL_NO=#{mailNo}
+		<if test="receive != null">
+			AND RECEIVE=#{receive}
+			AND REFERENCE IS NULL
+		</if>
+		<if test="reference != null">
+			AND REFERENCE=#{reference}
+		</if>
+	</update>
+	
+	<select id="selectOne" resultType="mv">
+		SELECT
+		    M.MAIL_NO
+		    , E.NICK SEND
+		    , EE.NICK RECEIVE
+		    , M.TITLE
+		    , M.CONTENT
+		FROM MAIL M
+		JOIN EMPLOYEE E
+			ON E.EMP_NO = M.SEND
+        JOIN MAIL_RECEIVE R
+			ON M.MAIL_NO = R.MAIL_NO
+		JOIN EMPLOYEE EE
+			ON EE.EMP_NO = R.RECEIVE
+		WHERE R.STATUS = 0
+			AND M.MAIL_NO = #{mailNo}
+			AND R.RECEIVE = #{receive}
+			AND R.REFERENCE IS NULL
+	</select>
+	
+	<select id="selectRef" resultType="String">
+		SELECT LISTAGG(E.NICK,',') WITHIN GROUP(ORDER BY R.REFERENCE) AS REFERENCE
+		FROM MAIL_RECEIVE R
+		JOIN EMPLOYEE E
+			ON E.EMP_NO = R.REFERENCE
+		JOIN MAIL M
+			ON M.MAIL_NO = R.MAIL_NO
+		WHERE R.MAIL_NO = #{mailNo}
+			AND R.RECEIVE=#{receive}
+			AND R.STATUS=0
+	</select>
+	
+	<select id="selectRefForRef" resultType="String">
+		SELECT LISTAGG(E.NICK,',') WITHIN GROUP(ORDER BY R.REFERENCE) AS REFERENCE
+		FROM (
+            SELECT DISTINCT REFERENCE
+                , MAIL_NO
+                , STATUS
+            FROM MAIL_RECEIVE
+        ) R
+		JOIN EMPLOYEE E
+			ON E.EMP_NO = R.REFERENCE
+		JOIN MAIL M
+			ON M.MAIL_NO = R.MAIL_NO
+		WHERE R.MAIL_NO =#{mailNo}
+			AND R.REFERENCE=#{reference}
+			AND R.STATUS=0
+	</select>
+	
+	<select id="selectRefOne" resultType="mv">
+		SELECT 
+		    MAIL_NO,
+		    SEND,
+		    TITLE,
+		    CONTENT,
+		    ENROLL_DATE,
+		    STAR
+		FROM (
+				SELECT 
+					M.MAIL_NO
+					, E.NICK SEND
+					, M.TITLE
+					, M.CONTENT
+					, M.ENROLL_DATE
+					, R.STAR
+					, R.READ_YN
+				FROM MAIL M
+					INNER JOIN MAIL_RECEIVE R
+					ON M.MAIL_NO = R.MAIL_NO
+					INNER JOIN EMPLOYEE E
+					ON M.SEND = E.EMP_NO
+				WHERE R.STATUS=0
+                AND R.REFERENCE=#{reference}
+		        ) 
+		WHERE MAIL_NO = #{mailNo}
+		group by MAIL_NO, TITLE, CONTENT, ENROLL_DATE, STAR, 
+		READ_YN, SEND
+	</select>
+	
+	<select id="selectStar" resultType="String">
+		SELECT STAR
+		FROM MAIL_RECEIVE
+		WHERE MAIL_NO=#{mailNo}
+		<if test="receive != null">
+			AND RECEIVE=#{receive}
+			AND REFERENCE IS NULL
+		</if>
+		<if test="reference != null">
+			AND REFERENCE=#{reference}
+		</if>
+	</select>
+	
+	<update id="updateReadYn">
+		UPDATE MAIL_RECEIVE
+		SET READ_YN = 'Y'
+		WHERE MAIL_NO=#{mailNo}
+		<if test="receive != null">
+			AND RECEIVE=#{receive}
+			AND REFERENCE IS NULL
+		</if>
+		<if test="reference != null">
+			AND REFERENCE=#{reference}
+		</if>
+	</update>
+	
+	<select id="selectStarList" resultType="mv">
+		SELECT 
+			M.MAIL_NO
+			, E.NICK SEND
+			, M.TITLE
+			, M.CONTENT
+			, M.ENROLL_DATE
+			, R.STAR
+			, R.REFERENCE
+			, R.READ_YN
+		FROM MAIL M
+			INNER JOIN MAIL_RECEIVE R
+			ON M.MAIL_NO = R.MAIL_NO
+			INNER JOIN EMPLOYEE E
+			ON R.RECEIVE = E.EMP_NO
+		WHERE R.STATUS=0
+		AND R.RECEIVE=#{empNo}
+        AND R.STAR = 'Y'
+		OR R.REFERENCE=#{empNo}
+		AND R.STAR = 'Y'
+	</select>
+	
+	<select id="selectNotReadCnt" resultType="String">
+		SELECT 
+			COUNT(READ_YN)
+		FROM MAIL_RECEIVE
+		WHERE STATUS=0
+		AND RECEIVE=#{receive}
+        AND REFERENCE IS NULL
+		AND READ_YN = 'N'
+	</select>
+	
+	<select id="selectFilePath" resultType="com.bs.mail.vo.MailAttVo">
+		SELECT 
+			MAIL_ATT_NO
+			, MAIL_NO
+			, NAME
+			, ORIGIN_NAME
+			, ENROLL_DATE
+		FROM MAIL_ATT
+		WHERE MAIL_NO = #{mailNo}
+	</select>
+	
+	<select id="selectDraftFilePath" resultType="com.bs.mail.vo.MailAttVo">
+		SELECT 
+			DRAFT_ATT_NO MAIL_ATT_NO
+			, DRAFT_NO MAIL_NO
+			, NAME
+			, ORIGIN_NAME
+			, ENROLL_DATE
+		FROM DRAFT_ATT
+		WHERE DRAFT_NO = #{mailNo}
+	</select>
+	
+	<update id="updateCheckStatus">
+		UPDATE MAIL_RECEIVE
+		SET STATUS = #{status}
+		WHERE MAIL_NO = #{mailNo}
+		<if test="reference == null">
+			AND RECEIVE = #{receive}
+			AND REFERENCE IS NULL
+		</if>
+		<if test="reference != null">
+			AND REFERENCE = #{reference}
+		</if>
+	</update>
+	
+	<select id="reference" resultType="mv">
+		SELECT 
+		    MAIL_NO,
+		    SEND,
+		    LISTAGG(RECEIVE,',') WITHIN GROUP(ORDER BY RECEIVE) AS RECEIVE,
+		    TITLE,
+		    CONTENT,
+		    ENROLL_DATE,
+		    STAR,
+		    READ_YN
+		FROM (
+				SELECT 
+					M.MAIL_NO
+					, E.NICK SEND
+					, EE.NICK RECEIVE
+					, M.TITLE
+					, M.CONTENT
+					, M.ENROLL_DATE
+					, R.STAR
+					, R.REFERENCE
+					, R.READ_YN
+				FROM MAIL M
+					INNER JOIN MAIL_RECEIVE R
+					ON M.MAIL_NO = R.MAIL_NO
+					INNER JOIN EMPLOYEE E
+					ON M.SEND = E.EMP_NO
+		            JOIN EMPLOYEE EE
+		            ON R.RECEIVE = EE.EMP_NO
+				WHERE R.STATUS=0
+		        AND R.REFERENCE=#{reference}
+		        ) 
+		GROUP BY MAIL_NO, TITLE, CONTENT, ENROLL_DATE, STAR, 
+                READ_YN, SEND
+	</select>
+	
+	<select id="selectSendList" resultType="mv">
+		SELECT 
+		    MAIL_NO,
+		    LISTAGG(RECEIVE,',') WITHIN GROUP(ORDER BY RECEIVE) AS RECEIVE,
+		    TITLE,
+		    CONTENT,
+		    ENROLL_DATE,
+		    STAR,
+		    LISTAGG(REFERENCE,',') WITHIN GROUP(ORDER BY REFERENCE) AS REFERENCE
+		FROM (
+				SELECT 
+					M.MAIL_NO
+					, EE.NICK RECEIVE
+					, M.TITLE
+					, M.CONTENT
+					, M.ENROLL_DATE
+					, R.STAR
+					, R.REFERENCE
+					, R.READ_YN
+				FROM MAIL M
+					INNER JOIN MAIL_RECEIVE R
+					ON M.MAIL_NO = R.MAIL_NO
+					INNER JOIN EMPLOYEE E
+					ON M.SEND = E.EMP_NO
+		            JOIN EMPLOYEE EE
+		            ON R.RECEIVE = EE.EMP_NO
+				WHERE R.STATUS=0
+		        AND M.SEND=#{send}
+		        AND R.REFERENCE IS NULL
+		        ) 
+		GROUP BY MAIL_NO, TITLE, CONTENT, ENROLL_DATE, STAR
+	</select>
+	
+	<select id="selectSendOne" resultType="mv">
+		SELECT
+		    M.MAIL_NO
+		    , E.NICK SEND
+		    , LISTAGG(EE.NICK,',') WITHIN GROUP(ORDER BY R.RECEIVE) AS RECEIVE
+		    , M.TITLE
+		    , M.CONTENT
+		FROM MAIL_RECEIVE R
+		JOIN MAIL M
+			ON M.MAIL_NO = R.MAIL_NO
+		JOIN EMPLOYEE E
+			ON E.EMP_NO = M.SEND
+		JOIN EMPLOYEE EE
+			ON EE.EMP_NO = R.RECEIVE
+		WHERE R.STATUS = 0
+			AND M.MAIL_NO = #{mailNo}
+			AND M.SEND = #{send}
+			AND R.REFERENCE IS NULL 
+        group by M.MAIL_NO, E.NICK, M.TITLE, M.CONTENT
+	</select>
+	
+	<select id="selectSendRef" resultType="String">
+        SELECT LISTAGG(E.NICK,',') WITHIN GROUP(ORDER BY R.REFERENCE) AS REFERENCE
+		FROM (
+            SELECT DISTINCT REFERENCE
+                , MAIL_NO
+                , STATUS
+            FROM MAIL_RECEIVE
+        ) R
+		JOIN EMPLOYEE E
+			ON E.EMP_NO = R.REFERENCE
+		JOIN MAIL M
+			ON M.MAIL_NO = R.MAIL_NO
+		WHERE R.MAIL_NO = #{mailNo}
+			AND M.SEND=#{send}
+			AND R.STATUS=0
+	</select>
+	
+	<!-- 휴지통 -->
+	<select id="selectStatusOne" resultType="mv">
+		SELECT 
+		    MAIL_NO,
+		    SEND,
+		    TITLE,
+		    CONTENT,
+		    ENROLL_DATE,
+		    STAR,
+		    READ_YN,
+            STATUS
+		FROM (
+				SELECT 
+					M.MAIL_NO
+					, E.NICK SEND
+					, M.TITLE
+					, M.CONTENT
+					, M.ENROLL_DATE
+					, R.STAR
+					, R.READ_YN
+                    , R.STATUS
+				FROM MAIL M
+					INNER JOIN MAIL_RECEIVE R
+					ON M.MAIL_NO = R.MAIL_NO
+					INNER JOIN EMPLOYEE E
+					ON M.SEND = E.EMP_NO
+		            JOIN EMPLOYEE EE
+		            ON R.RECEIVE = EE.EMP_NO
+				WHERE R.RECEIVE=#{receive}
+                OR R.REFERENCE=#{reference}
+		        ) 
+        WHERE STATUS = 1
+		GROUP BY MAIL_NO, TITLE, CONTENT, ENROLL_DATE, STAR, READ_YN, SEND , STATUS
+	</select>
+	
+	<select id="selectTrashOne" resultType="mv">
+		SELECT
+		    M.MAIL_NO
+		    , E.NICK SEND
+		    , EE.NICK RECEIVE
+		    , M.TITLE
+		    , M.CONTENT
+		FROM MAIL_RECEIVE R
+		JOIN MAIL M
+			ON M.MAIL_NO = R.MAIL_NO
+		JOIN EMPLOYEE E
+			ON E.EMP_NO = M.SEND
+		JOIN EMPLOYEE EE
+			ON EE.EMP_NO = R.RECEIVE
+		WHERE R.STATUS = 1
+			AND M.MAIL_NO = #{mailNo}
+			
+	</select>
+	
+	<select id="selectTrashRef" resultType="mv">
+		SELECT E.NICK REFERENCE
+		FROM MAIL_RECEIVE R
+		JOIN EMPLOYEE E
+			ON E.EMP_NO = R.REFERENCE
+		JOIN MAIL M
+			ON M.MAIL_NO = R.MAIL_NO
+		WHERE R.MAIL_NO = #{mailNo}
+			AND R.STATUS=1
+	</select>
+	
+	<!-- 임시보관함 -->
+	<select id="selectDraft" resultType="mv">
+		SELECT 
+			DRAFT_NO AS MAIL_NO
+			, SEND
+			, RECEIVE
+			, TITLE
+			, ENROLL_DATE
+		FROM DRAFT D
+		WHERE D.STATUS=0
+		AND SEND=#{empNo}
+	</select>
+	
+	<!-- 임시 보관하기 -->
+	<insert id="insertDraft">
+		INSERT INTO DRAFT(
+			DRAFT_NO
+			, SEND
+			, RECEIVE
+			<if test="reference != null">
+				, REFERENCE
+			</if>
+			, TITLE
+			, CONTENT
+		) VALUES (
+			SEQ_DRAFT_NO.NEXTVAL
+			, #{send}
+			, #{receive}
+			<if test="reference != null">
+				, #{reference}
+			</if>
+			, #{title}
+			, #{content}
+		)
+	</insert>
+	
+	<select id="selectDraftDetail" resultType="mv">
+		SELECT *
+		FROM DRAFT
+		WHERE STATUS = 0
+		AND DRAFT_NO = #{mailNo}
+	</select>
+	
+	<update id="updateCheckStatusDraft">
+		UPDATE DRAFT
+		SET STATUS = 1
+		WHERE DRAFT_NO = #{mailNo}
+	</update>
+	
+	<select id="selectUnreadMailList" resultType="mv">
+		SELECT 
+			M.MAIL_NO,
+			R.MAIL_REC_NO,
+			M.TITLE,
+			E.NICK AS SEND,
+			M.ENROLL_DATE
+		FROM MAIL M
+		JOIN MAIL_RECEIVE R
+			ON M.MAIL_NO = R.MAIL_NO
+		JOIN EMPLOYEE E
+			ON E.EMP_NO = M.SEND
+		WHERE R.STATUS=0
+			AND R.RECEIVE=#{receive}
+			AND R.REFERENCE IS NULL
+			AND R.READ_YN = 'N'
+		ORDER BY M.ENROLL_DATE DESC
+	</select>
+	
+</mapper>

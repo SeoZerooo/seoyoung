@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="approvalMapper">
+
+	<!-- 기안서 작성하기 -->
+	<insert id="insertOneIntoDocu" useGeneratedKeys="true" keyColumn="ADC_NO" keyProperty="adcNo">
+		INSERT INTO APPROVAL_DOCU(
+			ADC_NO
+			, EMP_NO
+			, CATEGORY_NO
+			, ADC_NAME
+			, ADC_CONTENT
+			, APRVER_EMP_NO
+			, APRVER_STATUS
+			, AGREE_EMP_NO
+			, AGREE_STATUS
+			, REF_EMP_NO
+			, REF_STATUS
+		)
+		VALUES(
+			APRV_DOCU_NO.NEXTVAL
+			, #{empNo}
+			, #{categoryNo}
+			, #{adcName}
+			, #{adcContent}
+			, #{aprverEmpNo}
+			, #{aprverStatus}
+			, #{agreeEmpNo}
+			, #{agreeStatus}
+			, #{refEmpNo}
+			, #{refStatus}
+		)
+	</insert>
+	
+	<!-- 내가 쓴 기안서 목록 조회 -->
+	<select id="getListByNo" resultType="aprvVo">
+		SELECT 
+		    A.ADC_NO
+		    , E.NICK            EMP_NO
+		    , C.CATEGORY_NAME   CATEGORY_NO
+		    , A.ADC_NAME
+		    , A.ADC_CONTENT
+		    , TO_CHAR(A.ENROLL_DATE, 'YYYY-MM-DD') AS ENROLL_DATE 
+			, APRVER_EMP_NO
+		    , APRVER_STATUS
+		    , AGREE_EMP_NO
+		    , AGREE_STATUS
+		    , REF_EMP_NO
+		    , REF_STATUS
+		    , A.CANCEL
+		FROM APPROVAL_DOCU A
+		JOIN EMPLOYEE E
+		ON (A.EMP_NO = E.EMP_NO)
+		JOIN APRV_CATEGORY C
+		ON (A.CATEGORY_NO = C.CATEGORY_NO)
+		WHERE A.CANCEL = 'N'
+		AND A.EMP_NO = #{empNo}
+		ORDER BY ADC_NO DESC
+	</select>
+	
+	<!-- 결재번호로 하나에 대한 정보 조회 -->
+	<select id="getOneByNo" resultType="aprvVo">
+		SELECT 
+		    A.ADC_NO
+		    , E.NICK            EMP_NO
+		    , C.CATEGORY_NAME   CATEGORY_NO
+		    , A.ADC_NAME
+		    , A.ADC_CONTENT
+		    , TO_CHAR(A.ENROLL_DATE, 'YYYY-MM-DD') AS ENROLL_DATE 
+		    , APRVER_EMP_NO
+		    , APRVER_STATUS
+		    , AGREE_EMP_NO
+		    , AGREE_STATUS
+		    , REF_EMP_NO
+		    , REF_STATUS
+		    , CANCEL
+		FROM APPROVAL_DOCU A
+		JOIN EMPLOYEE E
+		ON (A.EMP_NO = E.EMP_NO)
+		JOIN APRV_CATEGORY C
+		ON (A.CATEGORY_NO = C.CATEGORY_NO)
+		WHERE A.CANCEL = 'N'
+		AND A.ADC_NO = #{adcNo}
+	</select>
+	
+	<select id="getAllList" resultType="aprvVo">
+		SELECT 
+		    A.ADC_NO
+		    , E.NICK            EMP_NO
+		    , C.CATEGORY_NAME   CATEGORY_NO
+		    , A.ADC_NAME
+		    , A.ADC_CONTENT
+		    , TO_CHAR(A.ENROLL_DATE, 'YYYY-MM-DD') AS ENROLL_DATE 
+		    , APRVER_EMP_NO
+		    , APRVER_STATUS
+		    , AGREE_EMP_NO
+		    , AGREE_STATUS
+		    , REF_EMP_NO
+		    , REF_STATUS
+		    , CANCEL
+		FROM APPROVAL_DOCU A
+		JOIN EMPLOYEE E
+		ON (A.EMP_NO = E.EMP_NO)
+		JOIN APRV_CATEGORY C
+		ON (A.CATEGORY_NO = C.CATEGORY_NO)
+		WHERE A.CANCEL = 'N'
+		ORDER BY ADC_NO DESC
+	</select>
+	
+	<!-- 결재/합의/참조/기안취소 상태 업데이트 -->
+	<update id="updateStatus">
+		UPDATE APPROVAL_DOCU
+			SET
+			<choose>
+				<when test="key == 'aprv'">
+					APRVER_STATUS = #{value}
+				</when>
+				<when test="key == 'agree'">
+					AGREE_STATUS = #{value}
+				</when>
+				<when test="key == 'ref'">
+					REF_STATUS = #{value} 
+				</when>
+				<otherwise>
+					CANCEL = #{value}
+				</otherwise>
+			</choose>
+		WHERE ADC_NO = #{adcNo}
+	</update>
+	
+	<!-- 첨부파일 -->
+	<insert id="insertAtt">
+		INSERT INTO APRV_ATTATCHMENT(
+		ATT_NO
+		, ADC_NO
+		, ATT_NAME
+		, ORIGIN_NAME
+		) VALUES(
+		APRV_ATT_NO.NEXTVAL
+		, #{adcNo}
+		, #{attName}
+		, #{originName}
+		)
+	</insert>
+	
+	<!-- 첨부파일 가져오기 -->
+	<select id="selectAttList" resultType="aprvAttVo">
+		SELECT
+			ATT_NO
+			, ADC_NO
+			, ATT_NAME
+			, ORIGIN_NAME 
+		FROM APRV_ATTATCHMENT
+		WHERE ADC_NO = #{adcNo}
+	</select>
+
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
