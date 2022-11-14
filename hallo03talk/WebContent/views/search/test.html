@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<style>
+    .datepicker_wrap{
+        position : relative;
+        display: flex;
+        align-items: center;
+        z-index: 2;
+    }
+
+    .datepicker_wrap .react-datepicker_wrapper{
+        width: 100%;
+    }
+
+    .react-datepicker_wrapper{
+        display: inline-block;
+        padding: 0;
+        border: 0;
+    }
+    .react-datepicker__input-container{
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+    .datepicker[type="text"]{
+        background-color: #fff;
+        padding: 16px 28px 16px 46px;
+    }
+    .datepicker_wrap .bar{
+        display: inline-block;
+        min-width: 28px;
+        max-width: 28px;
+        font-size: 14px;
+        color: black;
+        text-align: center;
+    }
+    .btn{
+        position: relative;
+        width: 100%;
+        line-height: 20px;
+        border-radius: 4px;
+        padding: 17px 5px;
+        background-color: orange;
+        font-size: 14px;
+        color: #fff;
+        box-sizing: border-box;
+    }
+    .datepicker_wrap .btn{
+        margin-left: 14px;
+        max-width: 195px;
+        min-width: 195px;
+    }
+</style>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <p>날짜 선택</p>
+    <div class="datepicker_wrap">
+        <div class="react-datepicker_wrapper">
+            <div class="react-datepicker__input-container">
+                <input type="text" name="calPrev" placeholder="날짜 선택" autocomplete="off" class="datepicker" value="">
+            </div>
+        </div>
+    </div>
+    <span class="bar">-</span>
+    <div class="datepicker_wrap">
+        <div class="react-datepicker_wrapper">
+            <div class="react-datepicker__input-container">
+                <input type="text" name="calNext" placeholder="날짜 선택" autocomplete="off" class="datepicker" value="">
+            </div>
+        </div>
+    </div>
+    <button type="button" class="btn">검색하기</button>
+    
+</body>
+</html>

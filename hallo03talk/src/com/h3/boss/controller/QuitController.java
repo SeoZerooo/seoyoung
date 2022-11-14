@@ -1,0 +1,48 @@
+package com.h3.boss.controller;
+
+import java.io.IOException;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.h3.boss.service.BossService;
+
+
+@WebServlet(urlPatterns="/boss/quit")
+public class QuitController extends HttpServlet{
+
+	
+	@Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+	
+		// 인코딩 하기
+		req.setCharacterEncoding("UTF-8");   
+
+		String bossJoinId = req.getParameter("bossJoinId");
+		String bossJoinPwd = req.getParameter("bossJoinPwd");
+		String bossJoinPwd2 = req.getParameter("bossJoinPwd2");
+		
+		
+		int result = new BossService().quit(bossJoinId, bossJoinPwd, bossJoinPwd2);
+
+		// 결과에 따라 화면 선택
+		if(result == 1) {
+			// 성공
+			req.getSession().invalidate(); 
+			req.getSession().setAttribute("alertMsg", "회원탈퇴 성공!");
+
+			resp.sendRedirect("/hallo03talk");
+		}else {
+			// 실패
+			req.getSession().setAttribute("alertMsg", "회원탈퇴 실패!");
+			resp.sendRedirect("/hallo03talk/boss/myPage");
+		}
+
+	
+	}
+	
+}
