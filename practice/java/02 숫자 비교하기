@@ -1,0 +1,21 @@
+## 02.숫자 비교하기 (프로그래머스)
+
+### result  
+  
+|num1|num2|result|
+|------|---|---|
+|2|3|-1|
+|11|11|1|
+|7|99|-1|
+
+```java
+class Solution {
+    public int solution(int num1, int num2) {
+            if(num1 == num2){
+                return 1;
+            }else{
+                return -1;
+            }
+    }
+}
+```
