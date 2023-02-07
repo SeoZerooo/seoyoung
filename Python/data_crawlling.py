@@ -1,4 +1,3 @@
-
 # 1.라이브러리 불러오기
 import requests
 from bs4 import BeautifulSoup as bs
