@@ -12,7 +12,6 @@ search = input("검색할 키워드를 입력해주세요:")
 
 for page_num in range(1):
     # range를 이용하면 0부터 인덱스가 시작되므로 page_num에 1을 더해준 url을 이용
-    #url = f'https://smartstore.naver.com/compuzone/category/ALL?st=RECENT&free=false&dt=IMAGE&page={page_num+1}&size=40'
     url = f'https://search.naver.com/search.naver?where=influencer&sm=tab_jum&query='+ search
     
     # html 정보 받아와서 파싱
